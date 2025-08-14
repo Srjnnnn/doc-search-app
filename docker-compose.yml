@@ -17,7 +17,7 @@ services:
       timeout: 20s
       retries: 3
     networks:
-      - app-network
+      - doc-search-network
 
   minio:
     container_name: milvus-minio
@@ -37,7 +37,7 @@ services:
       timeout: 20s
       retries: 3
     networks:
-      - app-network
+      - doc-search-network
 
   milvus:
     container_name: milvus-standalone
@@ -61,7 +61,7 @@ services:
       - etcd
       - minio
     networks:
-      - app-network
+      - doc-search-network
 
   # Bing MCP Server (using the official implementation)
   # bing-mcp-server:
@@ -77,11 +77,12 @@ services:
   #   ports:
   #     - "8080:8080"
   #   networks:
-  #     - app-network
+  #     - doc-search-network
   #   restart: unless-stopped
 
   # Document Service
   document-service:
+    container_name: document-service
     build: 
       context: ./services/document-service
       dockerfile: Dockerfile
@@ -104,11 +105,12 @@ services:
       - ./data/documents:/app/documents
       - documents-data:/app/data
     networks:
-      - app-network
+      - doc-search-network
     restart: unless-stopped
 
   # LLM Service with VLLM
   llm-service:
+    container_name: llm-service
     build: 
       context: ./services/llm-service
       dockerfile: Dockerfile
@@ -117,45 +119,38 @@ services:
     env_file:
       - .env
     environment:
-      - CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES:-0}
       - HUGGINGFACE_TOKEN=${HUGGINGFACE_TOKEN}
-      - GPU_MEMORY_UTILIZATION=${GPU_MEMORY_UTILIZATION:-0.8}
+      - GPU_MEMORY_UTILIZATION=0  # Set to 0 since we're using CPU
       - MAX_MODEL_LEN=${MAX_MODEL_LEN:-4096}
-      - TENSOR_PARALLEL_SIZE=${TENSOR_PARALLEL_SIZE:-1}
+      - TENSOR_PARALLEL_SIZE=1  # No parallelism needed for CPU
       - LLM_MODEL_NAME=${LLM_MODEL_NAME:-Qwen/Qwen3-30B-A3B-Instruct-2507}
       - DEFAULT_MAX_TOKENS=${DEFAULT_MAX_TOKENS:-512}
       - DEFAULT_TEMPERATURE=${DEFAULT_TEMPERATURE:-0.7}
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [gpu]
     networks:
-      - app-network
+      - doc-search-network
     restart: unless-stopped
 
   # Web Search Service
-  web-search-service:
-    build: 
-      context: ./services/web-search-service
-      dockerfile: Dockerfile
-    ports:
-      - "8003:8003"
-    # depends_on:
-    #   - bing-mcp-server
-    env_file:
-      - .env
-    environment:
-      - MCP_SERVER_URL=http://bing-mcp-server:8080
-      - BING_API_KEY=${BING_API_KEY}
-    networks:
-      - app-network
-    restart: unless-stopped
+  # web-search-service:
+  #   build: 
+  #     context: ./services/web-search-service
+  #     dockerfile: Dockerfile
+  #   ports:
+  #     - "8003:8003"
+  #   # depends_on:
+  #   #   - bing-mcp-server
+  #   env_file:
+  #     - .env
+  #   environment:
+  #     - MCP_SERVER_URL=http://bing-mcp-server:8080
+  #     - BING_API_KEY=${BING_API_KEY}
+  #   networks:
+  #     - app-network
+  #   restart: unless-stopped
 
   # API Gateway
   api-gateway:
+    container_name: api-gateway
     build: 
       context: ./services/api-gateway
       dockerfile: Dockerfile
@@ -164,24 +159,26 @@ services:
     depends_on:
       - document-service
       - llm-service
-      - web-search-service
+      # - web-search-service
     env_file:
       - .env
     environment:
       - DOCUMENT_SERVICE_URL=http://document-service:8001
       - LLM_SERVICE_URL=http://llm-service:8002
-      - WEB_SEARCH_SERVICE_URL=http://web-search-service:8003
+      # - WEB_SEARCH_SERVICE_URL=http://web-search-service:8003
       - CORS_ORIGINS=${CORS_ORIGINS:-*}
       - MAX_CONCURRENT_REQUESTS=${MAX_CONCURRENT_REQUESTS:-10}
     networks:
-      - app-network
+      - doc-search-network
     restart: unless-stopped
 
   # Frontend
   frontend:
+    container_name: frontend
     build: 
       context: ./frontend
       dockerfile: Dockerfile
+    # command: ["nginx", "-t"]
     ports:
       - "3000:80"
     depends_on:
@@ -192,11 +189,11 @@ services:
       - REACT_APP_API_URL=${REACT_APP_API_URL:-http://localhost:8000}
       - REACT_APP_ENVIRONMENT=${REACT_APP_ENVIRONMENT:-development}
     networks:
-      - app-network
+      - doc-search-network
     restart: unless-stopped
 
 networks:
-  app-network:
+  doc-search-network:
     driver: bridge
     name: doc-search-network
 

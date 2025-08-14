@@ -1,5 +1,4 @@
-vllm==0.10.0
 fastapi==0.116.1
 uvicorn==0.35.0
-transformers==4.54.1
-torch
+requests==2.31.0  # For making HTTP requests to the Ollama API
+ollama

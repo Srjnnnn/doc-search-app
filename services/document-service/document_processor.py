@@ -10,13 +10,25 @@ import hashlib
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# document_processor.py
+
 class DocumentProcessor:
     def __init__(self, milvus_host: str = "milvus", milvus_port: int = 19530):
         self.milvus_host = milvus_host
         self.milvus_port = milvus_port
         self.embedding_model = SentenceTransformer('BAAI/bge-large-en-v1.5')
         self.collection_name = "document_embeddings"
-        self.dimension = 1024  # BGE-large dimension
+        
+        # Dynamically get dimension from the model
+        self.dimension = self.embedding_model.get_sentence_embedding_dimension()
+        logger.info(f"Embedding model loaded with dimension: {self.dimension}")
+
+        # Add validation for binary vector compatibility
+        if self.dimension % 8 != 0:
+            raise ValueError(
+                f"Embedding dimension {self.dimension} is not divisible by 8, "
+                "which is required for binary vectors in Milvus."
+            )
         
         # Connect to Milvus
         self._connect_milvus()
@@ -31,22 +43,26 @@ class DocumentProcessor:
             logger.error(f"Failed to connect to Milvus: {e}")
             raise
     
+    # document_processor.py
+
     def _create_collection(self):
         """Create Milvus collection for document embeddings"""
         if utility.has_collection(self.collection_name):
             utility.drop_collection(self.collection_name)
-        
+
+        # Define fields with the primary key as the first field
         fields = [
             FieldSchema(name="id", dtype=DataType.INT64, is_primary=True, auto_id=True),
             FieldSchema(name="text_hash", dtype=DataType.VARCHAR, max_length=64),
             FieldSchema(name="text", dtype=DataType.VARCHAR, max_length=65535),
-            FieldSchema(name="embedding", dtype=DataType.FLOAT_VECTOR, dim=self.dimension),
+            # FieldSchema(name="embedding", dtype=DataType.FLOAT_VECTOR, dim=self.dimension), # <-- REMOVE THIS LINE
             FieldSchema(name="binary_embedding", dtype=DataType.BINARY_VECTOR, dim=self.dimension)
         ]
-        
+
+        # Create the collection schema
         schema = CollectionSchema(fields, "Document embeddings collection")
         self.collection = Collection(self.collection_name, schema)
-        
+
         # Create index for binary vectors with Hamming distance
         index_params = {
             "metric_type": "HAMMING",
@@ -112,6 +128,8 @@ class DocumentProcessor:
         packed_binary = np.packbits(binary_embeddings, axis=1)
         return packed_binary
     
+    # document_processor.py
+
     def _store_embeddings(self, texts: List[str], embeddings: np.ndarray, binary_embeddings: np.ndarray):
         """Store embeddings in Milvus"""
         text_hashes = [hashlib.md5(text.encode()).hexdigest() for text in texts]
@@ -119,7 +137,7 @@ class DocumentProcessor:
         entities = [
             text_hashes,
             texts,
-            embeddings.tolist(),
+            # embeddings.tolist(), # <-- REMOVE THIS LINE
             binary_embeddings.tolist()
         ]
         

@@ -1,9 +1,10 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from vllm import LLM, SamplingParams
+import ollama
 from typing import List, Dict, Any
 import logging
 import os
+import requests
 
 # Configure logging from environment
 log_level = os.getenv("LOG_LEVEL", "INFO")
@@ -11,7 +12,7 @@ log_format = os.getenv("LOG_FORMAT", "%(asctime)s - %(name)s - %(levelname)s - %
 logging.basicConfig(level=getattr(logging, log_level), format=log_format)
 logger = logging.getLogger(__name__)
 
-app = FastAPI(title="VLLM LLM Service")
+app = FastAPI(title="Ollama LLM Service")
 
 app.add_middleware(
     CORSMiddleware,
@@ -21,33 +22,22 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Initialize VLLM with configuration from environment variables
-MODEL_NAME = os.getenv("LLM_MODEL_NAME", "Qwen/Qwen3-30B-A3B-Instruct-2507")
-GPU_MEMORY_UTILIZATION = float(os.getenv("GPU_MEMORY_UTILIZATION", "0.8"))
-MAX_MODEL_LEN = int(os.getenv("MAX_MODEL_LEN", "4096"))
-TENSOR_PARALLEL_SIZE = int(os.getenv("TENSOR_PARALLEL_SIZE", "1"))
-
+# Initialize Ollama with Phi4:latest model for Mac Silicon
+MODEL_NAME = "Phi4:latest"
+REQUEST_TIMEOUT = 30
+base_url = f"http://localhost:11434"
 try:
-    llm = LLM(
-        model=MODEL_NAME,
-        tensor_parallel_size=TENSOR_PARALLEL_SIZE,
-        gpu_memory_utilization=GPU_MEMORY_UTILIZATION,
-        max_model_len=MAX_MODEL_LEN,
-        trust_remote_code=True
-    )
+    llm = "Sercan"
     logger.info(f"Successfully loaded model: {MODEL_NAME}")
-    logger.info(f"GPU Memory Utilization: {GPU_MEMORY_UTILIZATION}")
-    logger.info(f"Max Model Length: {MAX_MODEL_LEN}")
-    logger.info(f"Tensor Parallel Size: {TENSOR_PARALLEL_SIZE}")
 except Exception as e:
     logger.error(f"Failed to load model: {e}")
     llm = None
 
 @app.post("/generate")
 async def generate_response(request: Dict[str, Any]):
-    """Generate response using VLLM"""
-    if llm is None:
-        raise HTTPException(status_code=503, detail="Model not loaded")
+    """Generate response using Ollama"""
+    # if llm is None:
+    #     raise HTTPException(status_code=503, detail="Model not loaded")
     
     try:
         context = request.get("context", "")
@@ -68,17 +58,23 @@ Answer:"""
         else:
             prompt = f"Question: {query}\n\nAnswer:"
         
-        # Set sampling parameters
-        sampling_params = SamplingParams(
-            temperature=temperature,
-            max_tokens=max_tokens,
-            top_p=0.9,
-            stop=["Question:", "\n\n"]
-        )
+        # # Set sampling parameters
+        # sampling_params = SamplingParams(
+        #     temperature=temperature,
+        #     max_tokens=max_tokens,
+        #     top_p=0.9,
+        #     stop=["Question:", "\n\n"]
+        # )
         
         # Generate response
-        outputs = llm.generate([prompt], sampling_params)
-        response = outputs[0].outputs[0].text.strip()
+        outputs = ollama.chat(model=MODEL_NAME, 
+                              messages=[{'role': 'system','content': f'You are an expert assistant. Use the following context to answer the user\'s question.\n\nContext:\n{context}',},{"role": "user", "content": prompt}],
+                              temperature=temperature,
+                              max_tokens=max_tokens)
+        
+        if not outputs or not outputs[0].outputs:
+            raise HTTPException(status_code=500, detail="No response generated")
+        response = outputs['message']['content']
         
         return {
             "response": response,
@@ -96,10 +92,7 @@ Answer:"""
 async def health_check():
     return {
         "status": "healthy" if llm is not None else "unhealthy",
-        "model": MODEL_NAME,
-        "gpu_memory_utilization": GPU_MEMORY_UTILIZATION,
-        "max_model_len": MAX_MODEL_LEN,
-        "tensor_parallel_size": TENSOR_PARALLEL_SIZE
+        "model": MODEL_NAME
     }
 
 @app.get("/model-info")
@@ -107,14 +100,7 @@ async def get_model_info():
     """Get detailed model information"""
     return {
         "model_name": MODEL_NAME,
-        "model_loaded": llm is not None,
-        "configuration": {
-            "gpu_memory_utilization": GPU_MEMORY_UTILIZATION,
-            "max_model_len": MAX_MODEL_LEN,
-            "tensor_parallel_size": TENSOR_PARALLEL_SIZE,
-            "default_max_tokens": int(os.getenv("DEFAULT_MAX_TOKENS", "512")),
-            "default_temperature": float(os.getenv("DEFAULT_TEMPERATURE", "0.7"))
-        }
+        "model_loaded": llm is not None
     }
 
 if __name__ == "__main__":

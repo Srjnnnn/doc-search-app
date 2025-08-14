@@ -17,10 +17,31 @@ app.add_middleware(
 
 processor = DocumentProcessor()
 
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 @app.post("/upload-documents")
 async def upload_documents(files: list[UploadFile] = File(...)):
+    print("Received files for processing:", [file.filename for file in files])
     """Upload and process documents"""
     with tempfile.TemporaryDirectory() as temp_dir:
+        print(f"Temporary directory created at: {temp_dir}")
+        
+        # Ensure the temporary directory exists
+        if not os.path.exists(temp_dir):
+            os.makedirs(temp_dir)
+        
+        logger.info(f"Processing {len(files)} files in temporary directory: {temp_dir}")
+        print(f"Processing {len(files)} files in temporary directory: {temp_dir}")
+        
+        if not files:
+            raise HTTPException(status_code=400, detail="No files uploaded")
+        
+        # Check if the directory is empty
+        if len(files) == 0:
+            raise HTTPException(status_code=400, detail="No files to process")
         try:
             # Save uploaded files
             for file in files:
@@ -33,6 +54,7 @@ async def upload_documents(files: list[UploadFile] = File(...)):
             return result
             
         except Exception as e:
+            logger.error(f"Error processing documents: {e}")
             raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/search")

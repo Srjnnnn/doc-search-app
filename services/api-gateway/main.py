@@ -26,8 +26,11 @@ WEB_SEARCH_SERVICE_URL = "http://web-search-service:8003"
 @app.post("/upload-documents")
 async def upload_documents(files: List[UploadFile] = File(...)):
     """Upload documents to document service"""
+    print("Received files for processing:", [file.filename for file in files])
+    if not files:
+        raise HTTPException(status_code=400, detail="No files uploaded")
     try:
-        async with AsyncClient() as client:
+        async with AsyncClient(timeout=60.0) as client:
             files_data = []
             for file in files:
                 content = await file.read()
