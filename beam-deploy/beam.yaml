@@ -27,7 +27,7 @@ spec:
     spec:
       containers:
       - name: document-service-container
-        image: your-registry/document-service:latest
+        image: eypsrcnuygr/document-service:latest
         ports:
         - containerPort: 8001
         envFrom:
@@ -51,7 +51,7 @@ spec:
     spec:
       containers:
       - name: llm-service-container
-        image: your-registry/llm-service:latest
+        image: eypsrcnuygr/llm-service:latest
         ports:
         - containerPort: 8002
         resources:
@@ -78,7 +78,7 @@ spec:
     spec:
       containers:
       - name: web-search-service-container
-        image: your-registry/web-search-service:latest
+        image: eypsrcnuygr/web-search-service:latest
         ports:
         - containerPort: 8003
         envFrom:
@@ -102,7 +102,7 @@ spec:
     spec:
       containers:
       - name: api-gateway-container
-        image: your-registry/api-gateway:latest
+        image: eypsrcnuygr/api-gateway:latest
         ports:
         - containerPort: 8000
         envFrom:

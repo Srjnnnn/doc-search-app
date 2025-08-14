@@ -47,19 +47,21 @@ def build_and_push_images():
         print(f"\n=== Building {service} ===")
         
         # Build image
-        build_cmd = f"docker build -t {service}:latest"
-        run_command(build_cmd)
+        # build_cmd = f"docker compose build pro-bab-{service}"
+        # run_command(build_cmd)
         
         # Push to registry
-        push_cmd = f"docker push {service}:latest"
+        tag_cmd = f"docker tag pro-bab-{service}:latest eypsrcnuygr/pro-bab-{service}:latest"
+        push_cmd = f"docker push eypsrcnuygr/pro-bab-{service}:latest"
+        run_command(tag_cmd)
         run_command(push_cmd)
     
     # Build frontend
-    print(f"\n=== Building frontend ===")
-    build_cmd = f"docker build -t frontend:latest ./frontend"
-    run_command(build_cmd)
-    
-    push_cmd = f"docker push frontend:latest"
+    # print(f"\n=== Building frontend ===")
+    # build_cmd = f"docker build -t frontend:latest ./frontend"
+    # run_command(build_cmd)
+    tag_cmd = f"docker tag pro-bab-frontend:latest eypsrcnuygr/pro-bab-frontend:latest"
+    push_cmd = f"docker push eypsrcnuygr/pro-bab-frontend:latest"
     run_command(push_cmd)
 
 def deploy_to_beam():
