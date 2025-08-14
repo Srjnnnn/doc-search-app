@@ -8,7 +8,7 @@ data:
   DOCUMENT_SERVICE_URL: "http://document-service:8001"
   LLM_SERVICE_URL: "http://llm-service:8002"
   WEB_SEARCH_SERVICE_URL: "http://web-search-service:8003"
-  MCP_SERVER_URL: "http://bing-mcp-server:8080"
+  # MCP_SERVER_URL: "http://bing-mcp-server:8080"
 
 ---
 apiVersion: apps/v1

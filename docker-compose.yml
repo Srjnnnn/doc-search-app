@@ -63,23 +63,6 @@ services:
     networks:
       - doc-search-network
 
-  # Bing MCP Server (using the official implementation)
-  # bing-mcp-server:
-  #   build:
-  #     context: ./services/bing-mcp-server
-  #     dockerfile: Dockerfile
-  #   env_file:
-  #     - .env
-  #   environment:
-  #     - BING_API_KEY=${BING_API_KEY}
-  #     - BING_API_URL=https://api.bing.microsoft.com/
-  #     - PORT=8080
-  #   ports:
-  #     - "8080:8080"
-  #   networks:
-  #     - doc-search-network
-  #   restart: unless-stopped
-
   # Document Service
   document-service:
     container_name: document-service
@@ -132,22 +115,22 @@ services:
     restart: unless-stopped
 
   # Web Search Service
-  # web-search-service:
-  #   build: 
-  #     context: ./services/web-search-service
-  #     dockerfile: Dockerfile
-  #   ports:
-  #     - "8003:8003"
-  #   # depends_on:
-  #   #   - bing-mcp-server
-  #   env_file:
-  #     - .env
-  #   environment:
-  #     - MCP_SERVER_URL=http://bing-mcp-server:8080
-  #     - BING_API_KEY=${BING_API_KEY}
-  #   networks:
-  #     - app-network
-  #   restart: unless-stopped
+  web-search-service:
+    build: 
+      context: ./services/web-search-service
+      dockerfile: Dockerfile
+    ports:
+      - "8003:8003"
+    # depends_on:
+    #   - bing-mcp-server
+    env_file:
+      - .env
+    environment:
+      # - MCP_SERVER_URL=http://bing-mcp-server:8080
+      - BING_API_KEY=${BING_API_KEY}
+    networks:
+      - app-network
+    restart: unless-stopped
 
   # API Gateway
   api-gateway:
