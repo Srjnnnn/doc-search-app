@@ -7,6 +7,16 @@ import os
 import subprocess
 import sys
 from pathlib import Path
+# from beam import Pod 
+
+# pod = Pod(
+#     name="Pro-Bab",
+#     cpu=4,
+#     memory="16Gi",
+#     gpu="A10G",  # Choose your required GPU type (e.g., "T4", "A10G", "A100")
+#     ports=[8000],
+#     entrypoint=["python3", "beam-deploy/deploy.py"],
+# )
 
 def run_command(cmd, cwd=None):
     """Run shell command and handle errors"""
@@ -24,7 +34,7 @@ def build_and_push_images():
     """Build and push Docker images to Beam Cloud registry"""
     
     # Set your Beam Cloud registry URL
-    registry = os.getenv("BEAM_REGISTRY_URL", "your-beam-registry.com")
+    registry = os.getenv("BEAM_REGISTRY_URL", "https://8cdcf40b-006d-421a-8791-fe7a26402bdb-8000.app.beam.cloud/")
     
     services = [
         "document-service",
@@ -37,19 +47,19 @@ def build_and_push_images():
         print(f"\n=== Building {service} ===")
         
         # Build image
-        build_cmd = f"docker build -t {registry}/{service}:latest ./services/{service}"
+        build_cmd = f"docker build -t {service}:latest"
         run_command(build_cmd)
         
         # Push to registry
-        push_cmd = f"docker push {registry}/{service}:latest"
+        push_cmd = f"docker push {service}:latest"
         run_command(push_cmd)
     
     # Build frontend
     print(f"\n=== Building frontend ===")
-    build_cmd = f"docker build -t {registry}/frontend:latest ./frontend"
+    build_cmd = f"docker build -t frontend:latest ./frontend"
     run_command(build_cmd)
     
-    push_cmd = f"docker push {registry}/frontend:latest"
+    push_cmd = f"docker push frontend:latest"
     run_command(push_cmd)
 
 def deploy_to_beam():
@@ -69,11 +79,11 @@ def main():
     print("Starting Beam Cloud deployment...")
     
     # Check if required environment variables are set
-    required_vars = ["BEAM_REGISTRY_URL", "BING_API_KEY"]
-    for var in required_vars:
-        if not os.getenv(var):
-            print(f"Error: {var} environment variable is required")
-            sys.exit(1)
+    # required_vars = ["BEAM_REGISTRY_URL", "BING_API_KEY"]
+    # for var in required_vars:
+    #     if not os.getenv(var):
+    #         print(f"Error: {var} environment variable is required")
+    #         sys.exit(1)
     
     # Build and push images
     build_and_push_images()

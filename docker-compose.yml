@@ -129,7 +129,7 @@ services:
       # - MCP_SERVER_URL=http://bing-mcp-server:8080
       - BING_API_KEY=${BING_API_KEY}
     networks:
-      - app-network
+      - doc-search-network
     restart: unless-stopped
 
   # API Gateway
