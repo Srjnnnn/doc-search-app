@@ -20,4 +20,4 @@ COPY . .
 EXPOSE 8002
 
 # Run the application
-CMD ["python", "ollama_server.py"]
+CMD ["python", "vllm_server.py"]

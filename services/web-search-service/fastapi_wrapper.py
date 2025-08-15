@@ -8,6 +8,7 @@ import logging
 import uuid
 from typing import Dict, Any
 from bing_search_server import BingSearchMCP
+import os
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
