@@ -69,6 +69,7 @@ services:
     build: 
       context: ./services/document-service
       dockerfile: Dockerfile
+    image: us-central1-docker.pkg.dev/probab-456223/doc-search-repo/document-service
     ports:
       - "8001:8001"
     depends_on:
@@ -97,6 +98,7 @@ services:
     build: 
       context: ./services/llm-service
       dockerfile: Dockerfile
+    image: us-central1-docker.pkg.dev/probab-456223/doc-search-repo/llm-service
     ports:
       - "8002:8002"
     env_file:
@@ -119,6 +121,7 @@ services:
     build: 
       context: ./services/web-search-service
       dockerfile: Dockerfile
+    image: us-central1-docker.pkg.dev/probab-456223/doc-search-repo/web-search-service
     ports:
       - "8003:8003"
     # depends_on:
@@ -138,6 +141,7 @@ services:
     build: 
       context: ./services/api-gateway
       dockerfile: Dockerfile
+    image: us-central1-docker.pkg.dev/probab-456223/doc-search-repo/api-gateway
     ports:
       - "8000:8000"
     depends_on:
@@ -162,6 +166,7 @@ services:
     build: 
       context: ./frontend
       dockerfile: Dockerfile
+    image: us-central1-docker.pkg.dev/probab-456223/doc-search-repo/frontend
     # command: ["nginx", "-t"]
     ports:
       - "3000:80"

@@ -27,7 +27,7 @@ spec:
     spec:
       containers:
       - name: document-service-container
-        image: eypsrcnuygr/document-service:latest
+        image: us-central1-docker.pkg.dev/probab-456223/doc-search-repo/document-service
         ports:
         - containerPort: 8001
         envFrom:
@@ -51,7 +51,7 @@ spec:
     spec:
       containers:
       - name: llm-service-container
-        image: eypsrcnuygr/llm-service:latest
+        image: us-central1-docker.pkg.dev/probab-456223/doc-search-repo/llm-service
         ports:
         - containerPort: 8002
         resources:
@@ -78,7 +78,7 @@ spec:
     spec:
       containers:
       - name: web-search-service-container
-        image: eypsrcnuygr/web-search-service:latest
+        image: us-central1-docker.pkg.dev/probab-456223/doc-search-repo/web-search-service
         ports:
         - containerPort: 8003
         envFrom:
@@ -102,12 +102,33 @@ spec:
     spec:
       containers:
       - name: api-gateway-container
-        image: eypsrcnuygr/api-gateway:latest
+        image: us-central1-docker.pkg.dev/probab-456223/doc-search-repo/api-gateway
         ports:
         - containerPort: 8000
         envFrom:
         - configMapRef:
             name: app-config
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+      - name: frontend-container
+        image: us-central1-docker.pkg.dev/probab-456223/doc-search-repo/frontend
+        ports:
+        - containerPort: 80
 
 ---
 apiVersion: v1
@@ -118,6 +139,19 @@ spec:
   selector:
     app: api-gateway
   ports:
-  - port: 80
+  - port: 8000  # The port Nginx will proxy to
     targetPort: 8000
-  type: LoadBalancer
+  type: ClusterIP 
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-service
+spec:
+  selector:
+    app: frontend
+  ports:
+  - port: 80
+    targetPort: 80
+  type: LoadBalancer # This will create an external IP
