@@ -99,6 +99,13 @@ services:
       context: ./services/llm-service
       dockerfile: Dockerfile
     image: us-central1-docker.pkg.dev/probab-456223/doc-search-repo/llm-service
+    deploy: # <--- ADD THIS ENTIRE BLOCK
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
     ports:
       - "8002:8002"
     env_file:
@@ -109,7 +116,7 @@ services:
       - GPU_MEMORY_UTILIZATION=${GPU_MEMORY_UTILIZATION:-0.8}
       - MAX_MODEL_LEN=${MAX_MODEL_LEN:-4096}
       - TENSOR_PARALLEL_SIZE=${TENSOR_PARALLEL_SIZE:-1}
-      - LLM_MODEL_NAME=${LLM_MODEL_NAME:-Qwen/Qwen3-30B-A3B-Instruct-2507}
+      - LLM_MODEL_NAME=${LLM_MODEL_NAME:-Qwen/Qwen3-4B-Instruct-2507-FP8}
       - DEFAULT_MAX_TOKENS=${DEFAULT_MAX_TOKENS:-512}
       - DEFAULT_TEMPERATURE=${DEFAULT_TEMPERATURE:-0.7}
     networks:

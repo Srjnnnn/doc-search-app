@@ -134,11 +134,13 @@ class DocumentProcessor:
         """Store embeddings in Milvus"""
         text_hashes = [hashlib.md5(text.encode()).hexdigest() for text in texts]
         
+        # Convert each row in the numpy array to a bytes object
+        formatted_binary_embeddings = [row.tobytes() for row in binary_embeddings]
+        
         entities = [
             text_hashes,
             texts,
-            # embeddings.tolist(), # <-- REMOVE THIS LINE
-            binary_embeddings.tolist()
+            formatted_binary_embeddings # Use the correctly formatted list
         ]
         
         self.collection.insert(entities)
@@ -153,11 +155,14 @@ class DocumentProcessor:
             query_embedding = self.embedding_model.encode([query], normalize_embeddings=True)
             binary_query = self._binarize_embeddings(query_embedding)
             
+            # Convert the numpy query vector to a list containing one bytes object
+            formatted_binary_query = [row.tobytes() for row in binary_query]
+
             # Search in Milvus using binary vectors
             search_params = {"metric_type": "HAMMING", "params": {}}
             
             results = self.collection.search(
-                data=binary_query.tolist(),
+                data=formatted_binary_query, # Use the correctly formatted query
                 anns_field="binary_embedding",
                 param=search_params,
                 limit=top_k,
