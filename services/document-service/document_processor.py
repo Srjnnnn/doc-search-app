@@ -148,7 +148,7 @@ class DocumentProcessor:
         self.collection.load()
         logger.info(f"Stored {len(texts)} embeddings in Milvus")
     
-    def search_similar_chunks(self, query: str, top_k: int = 5) -> List[Dict[str, Any]]:
+    def search_similar_chunks(self, query: str, top_k: int = 12) -> List[Dict[str, Any]]:
         """Search for similar chunks using binary quantization and Hamming distance"""
         try:
             # Generate and binarize query embedding

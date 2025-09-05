@@ -148,7 +148,7 @@ async def search_documents(query: str):
     async with AsyncClient() as client:
         response = await client.post(
             f"{DOCUMENT_SERVICE_URL}/search",
-            json={"query": query, "top_k": 5}
+            json={"query": query, "top_k": 12}
         )
         response.raise_for_status()  # This is crucial to trigger retries on 5xx errors
         return response.json().get("results", [])
@@ -167,7 +167,7 @@ async def search_web(query: str):
 
 # CORRECTED: Changed 'retry_on_exception' to 'retry'
 @retry(**RETRY_SETTINGS, retry=lambda e: isinstance(e, RETRYABLE_EXCEPTIONS))
-async def generate_llm_response(query: str, context: str = "", max_tokens: int = 512, temperature: float = 0.7):
+async def generate_llm_response(query: str, context: str = "", max_tokens: int = 1024, temperature: float = 0.7):
     """Generate response using LLM service"""
     async with AsyncClient(timeout=60.0) as client:
         response = await client.post(

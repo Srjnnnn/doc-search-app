@@ -5,7 +5,7 @@ class QueryRequest(BaseModel):
     query: str
     use_documents: bool = True
     use_web_search: bool = False
-    max_tokens: Optional[int] = 512
+    max_tokens: Optional[int] = 1024
     temperature: Optional[float] = 0.7
 
 class SearchResult(BaseModel):

@@ -51,6 +51,7 @@ async def generate_response(request: Dict[str, Any]):
     
     try:
         context = request.get("context", "")
+        logger.info(f"Context received: {context}")
         query = request.get("query", "")
         max_tokens = request.get("max_tokens", int(os.getenv("DEFAULT_MAX_TOKENS", "512")))
         temperature = request.get("temperature", float(os.getenv("DEFAULT_TEMPERATURE", "0.7")))
@@ -78,6 +79,7 @@ Answer:"""
         
         # Generate response
         outputs = llm.generate([prompt], sampling_params)
+        logger.info(f"Outputs: {outputs}")
         response = outputs[0].outputs[0].text.strip()
         
         return {
